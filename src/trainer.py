@@ -38,19 +38,18 @@ import torch.utils.data as data
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
 
-
 class TrainerModule:
 
     def __init__(self,
-                 model_class : nn.Module,
-                 model_hparams : Dict[str, Any],
-                 optimizer_hparams : Dict[str, Any],
-                 exmp_input : Any,
-                 seed : int = 42,
-                 logger_params : Dict[str, Any] = None,
-                 enable_progress_bar : bool = True,
-                 debug : bool = False,
-                 check_val_every_n_epoch : int = 1,
+                 model_class: nn.Module,
+                 model_hparams: Dict[str, Any],
+                 optimizer_hparams: Dict[str, Any],
+                 exmp_input: Any,
+                 seed: int = 42,
+                 logger_params: Dict[str, Any] = None,
+                 enable_progress_bar: bool = True,
+                 debug: bool = False,
+                 check_val_every_n_epoch: int = 1,
                  **kwargs):
         """
         A basic Trainer module summarizing most common training functionalities
@@ -100,7 +99,7 @@ class TrainerModule:
         self.init_model(exmp_input)
 
     def init_logger(self,
-                    logger_params : Optional[Dict] = None):
+                    logger_params: Optional[Dict] = None):
         """
         Initializes a logger and creates a logging directory.
 
@@ -127,6 +126,7 @@ class TrainerModule:
                                             version=version,
                                             name='')
         elif logger_type == 'wandb':
+            ''
             self.logger = WandbLogger(name=logger_params.get('project_name', None),
                                       save_dir=log_dir,
                                       version=version,
@@ -142,7 +142,7 @@ class TrainerModule:
         self.log_dir = log_dir
 
     def init_model(self,
-                   exmp_input : Any):
+                   exmp_input: Any):
         """
         Creates an initial training state with newly generated network parameters.
 
@@ -152,7 +152,8 @@ class TrainerModule:
         # Prepare PRNG and input
         model_rng = random.PRNGKey(self.seed)
         model_rng, init_rng = random.split(model_rng)
-        exmp_input = [exmp_input] if not isinstance(exmp_input, (list, tuple)) else exmp_input
+        exmp_input = [exmp_input] if not isinstance(
+            exmp_input, (list, tuple)) else exmp_input
         # Run model initialization
         variables = self.run_model_init(exmp_input, init_rng)
         # Create default state. Optimizer is initialized later
@@ -165,8 +166,8 @@ class TrainerModule:
                                 opt_state=None)
 
     def run_model_init(self,
-                       exmp_input : Any,
-                       init_rng : Any) -> Dict:
+                       exmp_input: Any,
+                       init_rng: Any) -> Dict:
         """
         The model initialization call
 
@@ -180,7 +181,7 @@ class TrainerModule:
         return self.model.init(init_rng, *exmp_input, train=True)
 
     def print_tabulate(self,
-                       exmp_input : Any):
+                       exmp_input: Any):
         """
         Prints a summary of the Module represented as table.
 
@@ -190,8 +191,8 @@ class TrainerModule:
         print(self.model.tabulate(random.PRNGKey(0), *exmp_input, train=True))
 
     def init_optimizer(self,
-                       num_epochs : int,
-                       num_steps_per_epoch : int):
+                       num_epochs: int,
+                       num_steps_per_epoch: int):
         """
         Initializes the optimizer and learning rate scheduler.
 
@@ -225,7 +226,8 @@ class TrainerModule:
         # Clip gradients at max value, and evt. apply weight decay
         transf = [optax.clip_by_global_norm(hparams.pop('gradient_clip', 1.0))]
         if opt_class == optax.sgd and 'weight_decay' in hparams:  # wd is integrated in adamw
-            transf.append(optax.add_decayed_weights(hparams.pop('weight_decay', 0.0)))
+            transf.append(optax.add_decayed_weights(
+                hparams.pop('weight_decay', 0.0)))
         optimizer = optax.chain(
             *transf,
             opt_class(lr_schedule, **hparams)
@@ -261,21 +263,22 @@ class TrainerModule:
         function needs to be overwritten by a subclass. The train_step and
         eval_step functions here are examples for the signature of the functions.
         """
-        def train_step(state : TrainState,
-                       batch : Any):
+        def train_step(state: TrainState,
+                       batch: Any):
             metrics = {}
             return state, metrics
-        def eval_step(state : TrainState,
-                      batch : Any):
+
+        def eval_step(state: TrainState,
+                      batch: Any):
             metrics = {}
             return metrics
         raise NotImplementedError
 
     def train_model(self,
-                    train_loader : Iterator,
-                    val_loader : Iterator,
-                    test_loader : Optional[Iterator] = None,
-                    num_epochs : int = 500) -> Dict[str, Any]:
+                    train_loader: Iterator,
+                    val_loader: Iterator,
+                    test_loader: Optional[Iterator] = None,
+                    num_epochs: int = 500) -> Dict[str, Any]:
         """
         Starts a training loop for the given number of epochs.
 
@@ -301,9 +304,11 @@ class TrainerModule:
             # Validation every N epochs
             if epoch_idx % self.check_val_every_n_epoch == 0:
                 eval_metrics = self.eval_model(val_loader, log_prefix='val/')
-                self.on_validation_epoch_end(epoch_idx, eval_metrics, val_loader)
+                self.on_validation_epoch_end(
+                    epoch_idx, eval_metrics, val_loader)
                 self.logger.log_metrics(eval_metrics, step=epoch_idx)
-                self.save_metrics(f'eval_epoch_{str(epoch_idx).zfill(3)}', eval_metrics)
+                self.save_metrics(
+                    f'eval_epoch_{str(epoch_idx).zfill(3)}', eval_metrics)
                 # Save best model
                 if self.is_new_model_better(eval_metrics, best_eval_metrics):
                     best_eval_metrics = eval_metrics
@@ -322,7 +327,7 @@ class TrainerModule:
         return best_eval_metrics
 
     def train_epoch(self,
-                    train_loader : Iterator) -> Dict[str, Any]:
+                    train_loader: Iterator) -> Dict[str, Any]:
         """
         Trains a model for one epoch.
 
@@ -346,8 +351,8 @@ class TrainerModule:
         return metrics
 
     def eval_model(self,
-                   data_loader : Iterator,
-                   log_prefix : Optional[str] = '') -> Dict[str, Any]:
+                   data_loader: Iterator,
+                   log_prefix: Optional[str] = '') -> Dict[str, Any]:
         """
         Evaluates the model on a dataset.
 
@@ -364,16 +369,17 @@ class TrainerModule:
         num_elements = 0
         for batch in data_loader:
             step_metrics = self.eval_step(self.state, batch)
-            batch_size = batch[0].shape[0] if isinstance(batch, (list, tuple)) else batch.shape[0]
+            batch_size = batch[0].shape[0] if isinstance(
+                batch, (list, tuple)) else batch.shape[0]
             for key in step_metrics:
                 metrics[key] += step_metrics[key] * batch_size
             num_elements += batch_size
-        metrics = {(log_prefix + key): (metrics[key] / num_elements).item() for key in metrics}
+        metrics = {(log_prefix + key)                   : (metrics[key] / num_elements).item() for key in metrics}
         return metrics
 
     def is_new_model_better(self,
-                            new_metrics : Dict[str, Any],
-                            old_metrics : Dict[str, Any]) -> bool:
+                            new_metrics: Dict[str, Any],
+                            old_metrics: Dict[str, Any]) -> bool:
         """
         Compares two sets of evaluation metrics to decide whether the
         new model is better than the previous ones or not.
@@ -397,7 +403,7 @@ class TrainerModule:
         assert False, f'No known metrics to log on: {new_metrics}'
 
     def tracker(self,
-                iterator : Iterator,
+                iterator: Iterator,
                 **kwargs) -> Iterator:
         """
         Wraps an iterator in a progress bar tracker (tqdm) if the progress bar
@@ -417,8 +423,8 @@ class TrainerModule:
             return iterator
 
     def save_metrics(self,
-                     filename : str,
-                     metrics : Dict[str, Any]):
+                     filename: str,
+                     metrics: Dict[str, Any]):
         """
         Saves a dictionary of metrics to file. Can be used as a textual
         representation of the validation performance for checking in the terminal.
@@ -438,7 +444,7 @@ class TrainerModule:
         pass
 
     def on_training_epoch_end(self,
-                              epoch_idx : int):
+                              epoch_idx: int):
         """
         Method called at the end of each training epoch. Can be used for additional
         logging or similar.
@@ -449,9 +455,9 @@ class TrainerModule:
         pass
 
     def on_validation_epoch_end(self,
-                                epoch_idx : int,
-                                eval_metrics : Dict[str, Any],
-                                val_loader : Iterator):
+                                epoch_idx: int,
+                                eval_metrics: Dict[str, Any],
+                                val_loader: Iterator):
         """
         Method called at the end of each validation epoch. Can be used for additional
         logging and evaluation.
@@ -466,7 +472,7 @@ class TrainerModule:
         pass
 
     def save_model(self,
-                   step : int = 0):
+                   step: int = 0):
         """
         Saves current training state at certain training iteration. Only the model
         parameters and batch statistics are saved to reduce memory footprint. To
@@ -486,14 +492,16 @@ class TrainerModule:
         """
         Loads model parameters and batch statistics from the logging directory.
         """
-        state_dict = checkpoints.restore_checkpoint(ckpt_dir=self.log_dir, target=None)
+        state_dict = checkpoints.restore_checkpoint(
+            ckpt_dir=self.log_dir, target=None)
         self.state = TrainState.create(apply_fn=self.model.apply,
                                        params=state_dict['params'],
                                        batch_stats=state_dict['batch_stats'],
                                        # Optimizer will be overwritten when training starts
-                                       tx=self.state.tx if self.state.tx else optax.sgd(0.1),
+                                       tx=self.state.tx if self.state.tx else optax.sgd(
+                                           0.1),
                                        rng=self.state.rng
-                                      )
+                                       )
 
     def bind_model(self):
         """
@@ -510,8 +518,8 @@ class TrainerModule:
 
     @classmethod
     def load_from_checkpoint(cls,
-                             checkpoint : str,
-                             exmp_input : Any) -> Any:
+                             checkpoint: str,
+                             exmp_input: Any) -> Any:
         """
         Creates a Trainer object with same hyperparameters and loaded model from
         a checkpoint directory.

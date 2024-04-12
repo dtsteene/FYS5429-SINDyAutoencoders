@@ -1,0 +1,14 @@
+[build-system]
+requires = [
+    "setuptools>=61",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+version = "2024.04.12"
+name = "SINDyAutoencoder"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+# read dependencies from requirements.txt
+dependencies ={file = "requirements.txt"}
