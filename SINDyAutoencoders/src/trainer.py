@@ -38,6 +38,15 @@ import torch.utils.data as data
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
 
+class TrainState(train_state.TrainState):
+    # A simple extension of TrainState to also include batch statistics
+    # If a model has no batch statistics, it is None
+    batch_stats: Any = None
+    # You can further extend the TrainState by any additional part here
+    # For example, rng to keep for init, dropout, etc.
+    rng: Any = None
+
+
 class TrainerModule:
 
     def __init__(self,
@@ -374,7 +383,7 @@ class TrainerModule:
             for key in step_metrics:
                 metrics[key] += step_metrics[key] * batch_size
             num_elements += batch_size
-        metrics = {(log_prefix + key)                   : (metrics[key] / num_elements).item() for key in metrics}
+        metrics = {(log_prefix + key): (metrics[key] / num_elements).item() for key in metrics}
         return metrics
 
     def is_new_model_better(self,
