@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 version = "2024.04.12"
-name = "SINDyAutoencoder"
+name = "SINDyAutoencoders"
 dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
