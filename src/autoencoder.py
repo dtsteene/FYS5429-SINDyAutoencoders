@@ -39,10 +39,6 @@ class Autoencoder(nn.Module):
     input_dim: int
     latent_dim: int
     widths: list
-    poly_order: int
-    include_sine: bool
-    library_dim: int
-    model_order: int
     activation: nn.activation = nn.relu
 
     def setup(self):
@@ -50,13 +46,11 @@ class Autoencoder(nn.Module):
             self.input_dim, self.latent_dim, self.widths, self.activation)
         self.decoder = Decoder(
             self.latent_dim, self.input_dim, self.widths, self.activation)
+
         self.sindy_coefficients = self.param('sindy_coefficients', lambda rng, shape: random.normal(
             rng, shape), (self.library_dim, self.latent_dim))
 
     def __call__(self, x):
         z = self.encoder(x)
         x_hat = self.decoder(z)
-        # ... Implement other parts like SINDy etc.
-        # Placeholder for the full implementation
-
-        return x_hat, z
+        return x_hat
